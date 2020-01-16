@@ -1,53 +1,96 @@
-# Trojan-GFW Script
-## This script will help you set up a trojan-gfw server in an extremely fast way.
-### For more Info: https://www.johnrosen1.com/trojan/ 
+![logo](https://raw.githubusercontent.com/johnrosen1/trojan-gfw-script/master/logo.png)
+# Trojan-GFW Script (NO Centos Support!!!)
+## This script will help you set up a [Trojan-GFW](https://github.com/trojan-gfw/trojan) server in an extremely fast way.
+### Read The Fucking Manual: https://www.johnrosen1.com/trojan/ 
 
-#### via wget
+### GUI Version (Everything has been included)
 ```
-sudo bash -c "$(wget -O- https://raw.githubusercontent.com/johnrosen1/trojan-gfw-script/master/trojan.sh)"
+apt-get update && apt-get install sudo whiptail curl locales -y
 ```
-#### or via curl
 ```
-sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/johnrosen1/trojan-gfw-script/master/trojan.sh)"
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/johnrosen1/trojan-gfw-script/master/trojangui.sh)"
 ```
+![menu](https://raw.githubusercontent.com/johnrosen1/trojan-gfw-script/master/mainmenu.png)
+![choose](https://raw.githubusercontent.com/johnrosen1/trojan-gfw-script/master/useroption.png)
 #### Bash Features:
 
-1. Auto install Trojan-GFW NGINX V2ray and Dnsmasq
-2. Auto config Trojan-GFW NGINX V2ray and Dnsmasq
-3. Auto issue and renew let's encrypt certificate
-4. Auto OS Detect ***Support Centos Debian Ubuntu and Fedorea***
-5. Auto domain resolve verification
-6. Auto iptables firewall config and iptables-persistent
-7. Auto generate client config
-8. Auto random vmess uuid generate
-9. Auto TCP Turbo enable ( **TCP-BBR** included)
-10. Auto Nginx Performance Optimization (Centos exclued due to too old nginx version)
-11. Auto Trojan-GFW trojan:// share link and QR code generate
-12. Auto V2ray vmess:// share link generate
-13. Auto https 301 redirect without affecting certificate renew
-14. Support auto vmess + tls + websocket + nginx config
-15. Support manually check for update include both Trojan-gfw and v2ray
-16. Support manually force renew certificate
-17. Support Full Uninstall
+1. Auto install and config **[Trojan-GFW](https://github.com/trojan-gfw/trojan) and [NGINX](https://www.nginx.com/)**
+3. Auto issue renew [let's encrypt certificate](https://letsencrypt.org/) and **auto reload Trojan-GFW after renewal**
+4. Auto OS Detect **Support [Debian](https://www.debian.org/) [Ubuntu](https://ubuntu.com/)** (NO Centos Support!!!)
+5. Auto [domain resolve verification](https://en.wikipedia.org/wiki/Nslookup)
+6. Auto [iptables](https://en.wikipedia.org/wiki/Iptables)(includes ipv6) firewall config and [iptables-persistent](https://github.com/zertrin/iptables-persistent)
+7. Auto generate [client config](https://trojan-gfw.github.io/trojan/config) (includes both Trojan-GFW and V2ray )
+9. Auto [TCP Turbo](https://github.com/shadowsocks/shadowsocks/wiki/Optimizing-Shadowsocks) enable ( **[TCP-BBR](https://github.com/google/bbr)** included)
+10. Auto [Nginx Performance Optimization](https://www.johnrosen1.com/nginx1/)
+11. Auto [Trojan-GFW ***trojan://*** share link and QR code generate](https://github.com/trojan-gfw/trojan-url)
+12. Auto [V2ray ***vmess://*** share link generate](https://github.com/boypt/vmess2json)
+13. Auto [https 301 redirect](https://en.wikipedia.org/wiki/HTTP_301) without affecting certificate renew
+14. Auto enable [HSTS header](https://securityheaders.com/)
+16. Auto ***Random Html Template Choose***
+17. Auto enable [***Full IPv6 Support***](https://en.wikipedia.org/wiki/IPv6)
+18. Auto enable ***[time sync](https://www.freedesktop.org/software/systemd/man/timedatectl.html)***
+19. Auto enable ***Fail Restart*** 
+20. Auto [uninstall Aliyun Aegis](https://www.johnrosen1.com/ali-iso/)
+20. Support Auto install and config **[Dnsmasq](https://en.wikipedia.org/wiki/Dnsmasq) [V2ray](https://www.v2ray.com/index.html) [Shadowsocks](https://shadowsocks.org/en/index.html)([V2ray-plugin](https://github.com/shadowsocks/v2ray-plugin)) [Qbittorrent](https://www.qbittorrent.org/) and [Aria2](https://github.com/aria2/aria2)**
+20. Support auto ***random vmess uuid generate***
+19. Support auto [***vmess or ss + tls + websocket + nginx*** config](https://guide.v2fly.org/advanced/wss_and_web.html)
+20. Support ***[BBRPLUS](https://github.com/chiakge/Linux-NetSpeed)***
+15. Support ***[TLS1.3 ONLY](https://wiki.openssl.org/index.php/TLS1.3)***
+20. Support custom (V2ray or ss) websocket path and alterid
+21. Support manually check for update include both Trojan-gfw and v2ray
+23. Support Full Uninstall
+
+**If you need more functions, please open a Github issue.(No Centos related issues or bugs allowed except pull requests)**
 
 #### Friendly Reminder:
-1. Please Purchase a domain and finish a dns resolve before running this bash script!
-2. Please manually change system dns to frequently updated dns like 1.1.1.1 instead of those who update slowly like aliyun lan dns !
+1. Please **[Purchase a domain](https://www.namesilo.com/?rid=685fb47qi)** and finish a dns resolve before running this bash script!
+2. Please **Open Tcp port 80 and 443** in your vps firewall panel before running this bash script!
+3. Please manually change system dns to frequently updated dns like [1.1.1.1](https://1.1.1.1/) instead of those who update slowly like aliyun lan dns !
 ```
 echo "nameserver 1.1.1.1" > '/etc/resolv.conf'
 ```
-3. Please choose option2 if you want to use v2ray !
-4. Please do not any special symbols like "!" in password1 or 2 , or error will occur !
-5. Please do not use enter / in websocket option ,enter someting else like /secret !
-6. For security reasons, system upgrade is not forced ,press [ENTER] to skip or manually enter y to upgrade system.
-7. Due to the lack of support for python3-qrcode in Ubuntu 16.04,Trojan-GFW QR code generating will be skipped !
-8. Due to personal demands , Dnsmasq installation is not forced ,press [ENTER] to skip or manually enter y to install dnsmasq.
-9. If "sudo command not found" , please manually remove "sudo" from the beginning of the command and run as root !
+4. Please do not use enter / in websocket option ,enter someting else like /secret !
+5. Trojan-GFW QR code generate will be skipped on os who do not support python3-qrcode!
+6. If "sudo command not found" , please manually install sudo from the command above !
 
-#### Telegram Channel And Group
+#### [Telegram](https://telegram.org/) Channel And Group
 
 ### https://t.me/johnrosen1
 
 ### https://t.me/trojanscript
 
-Attachment: Trojan-GFW one-click script's function is basically complete. Stop updating from now on. If you need more functions, please use Github issue function.
+## If you found it useful , please give a star ,thanks!
+
+### VPS Recommendation (no personal aff included)
+
+#### https://www.kamatera.com/
+
+#### Related Links
+
+https://www.johnrosen1.com/qbt/
+
+### Debug Guide
+
+```
+sudo systemctl status trojan
+sudo systemctl status nginx
+sudo systemctl status v2ray
+sudo systemctl status dnsmasq
+sudo systemctl status qbittorrent
+sudo systemctl status aria2
+journalctl -e -u trojan.service
+cat /var/log/v2ray/error.log
+cat /etc/v2ray/config.json
+cat /etc/aria.conf
+crontab -l
+sudo ~/.acme.sh/acme.sh --cron
+timedatectl
+```
+### Result Example
+```
+trojan://trojanscript@www.johnrosen.top:443
+```
+![Trojan-GFW QR code](https://raw.githubusercontent.com/johnrosen1/trojan-gfw-script/master/trojanscript.png)
+
+
+
