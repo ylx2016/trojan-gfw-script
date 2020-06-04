@@ -5,7 +5,7 @@ A powerful Toolbox for Linux VPS.
 
 #### 如何使用
 ```
-apt-get update && apt-get install sudo curl -y && sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/johnrosen1/vpstoolbox/master/vps.sh)"
+apt-get update && apt-get install sudo curl -y && curl -sO https://raw.githubusercontent.com/johnrosen1/vpstoolbox/master/vps.sh && sudo bash vps.sh
 ```
 
 流量图示:
@@ -30,14 +30,14 @@ apt-get update && apt-get install sudo curl -y && sudo bash -c "$(curl -fsSL htt
 #### 特性:
 
 1. 全自动安装并配置 **[NGINX Web Server](https://www.nginx.com/)**
-20. 支援全自动安装并配置 **[Trojan-GFW](https://github.com/trojan-gfw/trojan) [Dnscrypt-proxy](https://www.dnscrypt.org/) [Qbittorrent](https://www.qbittorrent.org/) [Bittorrent-Tracker](https://github.com/webtorrent/bittorrent-tracker) [Aria2](https://github.com/aria2/aria2) [Filebrowser](https://github.com/filebrowser/filebrowser) [Netdata](https://github.com/netdata/netdata) [MariaDB](https://mariadb.org/) and [TOR](https://famicoman.com/2018/01/03/configuring-and-monitoring-a-tor-middle-relay/)**
+20. 支援全自动安装并配置 **[Trojan-GFW](https://github.com/trojan-gfw/trojan) [Dnscrypt-proxy](https://www.dnscrypt.org/) [Qbittorrent](https://www.qbittorrent.org/) [Bittorrent-Tracker](https://github.com/webtorrent/bittorrent-tracker) [Aria2](https://github.com/aria2/aria2) [Filebrowser](https://github.com/filebrowser/filebrowser) [Netdata](https://github.com/netdata/netdata) [MariaDB](https://mariadb.org/) [PHP](https://www.php.net/) and [TOR](https://famicoman.com/2018/01/03/configuring-and-monitoring-a-tor-middle-relay/)**
 3. 全自动签发,续签,重启服务 [let's encrypt 证书](https://letsencrypt.org/)
 4. **支援 [Debian](https://www.debian.org/) [Ubuntu](https://ubuntu.com/)**
-16. Random Html Template Choose
+16. 随机HTML模板选择
 17. [完整的IPV6支援](https://en.wikipedia.org/wiki/IPv6)
 17. [Full HTTP/2 Support](https://en.wikipedia.org/wiki/HTTP/2)
 18. [全自动时间较准](https://www.freedesktop.org/software/systemd/man/timedatectl.html)
-19. 全自动掉线重启
+19. 全自动服务掉线重启
 20. [全自动检测并卸载阿里云监控](https://www.johnrosen1.com/ali-iso/)
 9.  支援 [TCP Turbo](https://github.com/shadowsocks/shadowsocks/wiki/Optimizing-Shadowsocks)
 15. 支援 [TLS1.3 ONLY](https://wiki.openssl.org/index.php/TLS1.3)
@@ -45,4 +45,4 @@ apt-get update && apt-get install sudo curl -y && sudo bash -c "$(curl -fsSL htt
 23. 支援完全/部分卸载
 24. And so on...
 
-## If you found it useful , please give a star ,thanks!
+## 如果此项目对你有用 , 请给颗star ,谢谢!

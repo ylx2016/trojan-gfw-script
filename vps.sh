@@ -47,8 +47,8 @@ if [[ $(uname -m 2> /dev/null) != x86_64 ]]; then
 	exit 1
 fi
 
-if [[ $(free -m  | grep Mem | awk '{print $2}' 2> /dev/null) -le "480" ]]; then
-  echo Please run this script on machine with more than 512MB free ram.
+if [[ $(free -m  | grep Mem | awk '{print $2}' 2> /dev/null) -le "400" ]]; then
+  echo Please run this script on machine with more than 500MB free ram.
   exit 1
 fi
 
@@ -253,7 +253,7 @@ LANGUAGE="zh_TW.UTF-8"
 LANG="zh_TW.UTF-8"
 LC_ALL="zh_TW.UTF-8"
 EOF
-apt-get install manpages-zh -y
+#apt-get install manpages-zh -y
 	cat > '/root/.trojan/language.json' << EOF
 {
   "language": "$language"
@@ -424,24 +424,25 @@ whiptail --clear --ok-button "吾意已決 立即執行" --backtitle "Hi , Pleas
 "1" "System Upgrade" on \
 "2" "Enable BBR(TCP-Turbo)" on \
 "3" "Docker" on \
+"4" "PHP" on \
 "代理" "Proxy" on  \
-"4" "Trojan-GFW" on \
-"5" "Dnscrypt-proxy(Dns encryption)" on \
+"5" "Trojan-GFW" on \
+"6" "Dnscrypt-proxy(Dns encryption)" on \
 "下载" "Download" on  \
-"6" "Qbittorrent(Bittorrent Client)" off \
-"7" "Bt-Tracker(Node.js Version)" on \
-"8" "Aria2" on \
-"9" "Filebrowser(File manager)" on \
+"7" "Qbittorrent(Bittorrent Client)" off \
+"8" "Bt-Tracker(Node.js Version)" on \
+"9" "Aria2" on \
+"10" "Filebrowser(File manager)" on \
 "状态" "Status" on  \
-"10" "Netdata(Server status monitor)" on \
+"11" "Netdata(Server status monitor)" on \
 "测速" "Speedtest" on  \
-"11" "Speedtest(Docker Version)" on \
+"12" "Speedtest(Docker Version)" on \
 "数据库" "Database" on  \
-"12" "MariaDB" on \
+"13" "MariaDB" on \
 "其他" "Others" on  \
-"13" "OPENSSL" off \
-"14" "Tor-Relay" off \
-"15" "Enable TLS1.3 only" off 2>results
+"14" "OPENSSL" off \
+"15" "Tor-Relay" off \
+"16" "Enable TLS1.3 only" off 2>results
 
 while read choice
 do
@@ -460,39 +461,42 @@ do
 		install_docker=1
 		;;
 		4)
+		install_php=1
+		;;
+		5)
 		install_trojan=1
 		;;
-		5) 
+		6) 
 		dnsmasq_install=1
 		;;
-		6)
+		7)
 		install_qbt=1
 		;;
-		7)
+		8)
 		install_tracker=1
 		;;
-		8)
+		9)
 		install_aria=1
 		;;
-		9)
+		10)
 		install_file=1
 		;;
-		10)
+		11)
 		install_netdata=1
 		;;
-		11)
+		12)
 		install_speedtest=1
 		;;
-		12)
+		13)
 		install_mariadb=1
 		;;
-		13)
+		14)
 		install_openssl=1
 		;;
-		14)
+		15)
 		install_tor=1
 		;;
-		15) 
+		16) 
 		tls13only=1
 		;;
 		*)
@@ -522,13 +526,6 @@ while [[ -z ${domain} ]]; do
 domain=$(whiptail --inputbox --nocancel "Please enter your domain(请輸入你的域名)(请先完成A/AAAA解析 https://dnschecker.org/)" 8 78 --title "Domain input" 3>&1 1>&2 2>&3)
 done
 hostnamectl set-hostname $domain
-if grep -q "${domain}" /etc/hosts
-	then
-	:
-	else
-echo "" >> /etc/hosts
-echo "${myip} ${domain}" >> /etc/hosts
-fi
 if [[ ${install_trojan} = 1 ]]; then
 	while [[ -z ${password1} ]]; do
 password1=$(whiptail --passwordbox --nocancel "Trojan-GFW Password One(若不確定，請直接回車，会随机生成)" 8 78 --title "password1 input" 3>&1 1>&2 2>&3)
@@ -908,16 +905,16 @@ openfirewall(){
 	#iptables -m owner --uid-owner trojan -A OUTPUT -d 127.0.0.0/8 --dport 80 -j ACCEPT
 	#iptables -m owner --uid-owner trojan -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 	#tcp
-	iptables -A INPUT -p tcp -m tcp --dport 443 -j ACCEPT
-	iptables -A INPUT -p tcp -m tcp --dport 80 -j ACCEPT
+	iptables -A INPUT -p tcp -m tcp --dport 443 -j ACCEPT #HTTPS
+	iptables -A INPUT -p tcp -m tcp --dport 80 -j ACCEPT #HTTP
 	#udp
 	iptables -A INPUT -p udp -m udp --dport 443 -j ACCEPT
 	iptables -A INPUT -p udp -m udp --dport 80 -j ACCEPT
 	iptables -A OUTPUT -j ACCEPT
 	#iptables -I FORWARD -j DROP
 	#tcp6
-	ip6tables -I INPUT -p tcp -m tcp --dport 443 -j ACCEPT
-	ip6tables -A INPUT -p tcp -m tcp --dport 80 -j ACCEPT
+	ip6tables -I INPUT -p tcp -m tcp --dport 443 -j ACCEPT #HTTPSv6
+	ip6tables -A INPUT -p tcp -m tcp --dport 80 -j ACCEPT #HTTPv6
 	#udp6
 	ip6tables -A INPUT -p udp -m udp --dport 443 -j ACCEPT
 	ip6tables -A INPUT -p udp -m udp --dport 80 -j ACCEPT
@@ -1107,9 +1104,9 @@ systemctl daemon-reload
 ###########################################
 clear
 colorEcho ${INFO} "Installing all necessary Software"
-apt-get install sudo curl xz-utils wget apt-transport-https gnupg dnsutils lsb-release python-pil unzip resolvconf ntpdate systemd dbus ca-certificates locales iptables software-properties-common cron e2fsprogs less haveged -q -y
+apt-get install sudo git curl xz-utils wget apt-transport-https gnupg dnsutils lsb-release python-pil unzip resolvconf ntpdate systemd dbus ca-certificates locales iptables software-properties-common cron e2fsprogs less haveged -q -y
 apt-get install python3-qrcode python-dnspython -q -y
-sh -c 'echo "y\n\ny\ny\ny\ny\ny\ny\ny\n" | DEBIAN_FRONTEND=noninteractive apt-get install ntp -q -y'
+sh -c 'echo "y\n\ny\ny\n" | DEBIAN_FRONTEND=noninteractive apt-get install ntp -q -y'
 clear
 #############################################
 if [[ -f /root/.acme.sh/${domain}_ecc/fullchain.cer ]] && [[ -n /root/.acme.sh/${domain}_ecc/fullchain.cer ]] || [[ $dns_api == 1 ]] || [[ ${othercert} == 1 ]] || [[ ${installstatus} == 1 ]]; then
@@ -1932,7 +1929,7 @@ clear
 if [[ $install_tor = 1 ]]; then
 	clear
 	if [[ ! -f /usr/bin/tor ]]; then
-		colorEcho ${INFO} "Install Tor Relay ing"
+	colorEcho ${INFO} "Install Tor Relay ing"
 	export DEBIAN_FRONTEND=noninteractive
 	touch /etc/apt/sources.list.d/tor.list
 	cat > '/etc/apt/sources.list.d/tor.list' << EOF
@@ -1960,9 +1957,466 @@ service tor start
 systemctl restart tor@default
 	fi
 fi
+########Install PHP##################
+if [[ $install_php = 1 ]]; then
+	clear
+	if [[ ! -f /usr/sbin/php-fpm7.4 ]]; then
+	colorEcho ${INFO} "Install PHP ing"
+	apt-get purge php* -y
+	wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
+	echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/php.list
+	apt-get update
+	apt-get -y install php7.4
+	systemctl disable --now apache2
+	apt-get install php7.4-fpm -y
+	apt-get install php7.4-common php7.4-mysql php7.4-xml php7.4-json php7.4-readline php7.4-xmlrpc php7.4-curl php7.4-gd php7.4-imagick php7.4-cli php7.4-dev php7.4-imap php7.4-mbstring php7.4-opcache php7.4-soap php7.4-zip php7.4-intl php7.4-bcmath -y
+cat > '/etc/php/7.4/fpm/pool.d/www.conf' << EOF
+; Start a new pool named 'www'.
+; the variable $pool can be used in any directive and will be replaced by the
+; pool name ('www' here)
+[www]
+
+; Per pool prefix
+; It only applies on the following directives:
+; - 'access.log'
+; - 'slowlog'
+; - 'listen' (unixsocket)
+; - 'chroot'
+; - 'chdir'
+; - 'php_values'
+; - 'php_admin_values'
+; When not set, the global prefix (or /usr) applies instead.
+; Note: This directive can also be relative to the global prefix.
+; Default Value: none
+;prefix = /path/to/pools/$pool
+
+; Unix user/group of processes
+; Note: The user is mandatory. If the group is not set, the default user's group
+;       will be used.
+user = nginx
+group = nginx
+
+; The address on which to accept FastCGI requests.
+; Valid syntaxes are:
+;   'ip.add.re.ss:port'    - to listen on a TCP socket to a specific IPv4 address on
+;                            a specific port;
+;   '[ip:6:addr:ess]:port' - to listen on a TCP socket to a specific IPv6 address on
+;                            a specific port;
+;   'port'                 - to listen on a TCP socket to all addresses
+;                            (IPv6 and IPv4-mapped) on a specific port;
+;   '/path/to/unix/socket' - to listen on a unix socket.
+; Note: This value is mandatory.
+listen = /run/php/php7.4-fpm.sock
+; listen = 127.0.0.1:9000
+; Set listen(2) backlog.
+; Default Value: 511 (-1 on FreeBSD and OpenBSD)
+;listen.backlog = 511
+
+; Set permissions for unix socket, if one is used. In Linux, read/write
+; permissions must be set in order to allow connections from a web server. Many
+; BSD-derived systems allow connections regardless of permissions. The owner
+; and group can be specified either by name or by their numeric IDs.
+; Default Values: user and group are set as the running user
+;                 mode is set to 0660
+listen.owner = nginx
+listen.group = nginx
+;listen.mode = 0660
+; When POSIX Access Control Lists are supported you can set them using
+; these options, value is a comma separated list of user/group names.
+; When set, listen.owner and listen.group are ignored
+;listen.acl_users =
+;listen.acl_groups =
+
+; List of addresses (IPv4/IPv6) of FastCGI clients which are allowed to connect.
+; Equivalent to the FCGI_WEB_SERVER_ADDRS environment variable in the original
+; PHP FCGI (5.2.2+). Makes sense only with a tcp listening socket. Each address
+; must be separated by a comma. If this value is left blank, connections will be
+; accepted from any ip address.
+; Default Value: any
+; listen.allowed_clients = 127.0.0.1
+
+; Specify the nice(2) priority to apply to the pool processes (only if set)
+; The value can vary from -19 (highest priority) to 20 (lower priority)
+; Note: - It will only work if the FPM master process is launched as root
+;       - The pool processes will inherit the master process priority
+;         unless it specified otherwise
+; Default Value: no set
+; process.priority = -19
+
+; Set the process dumpable flag (PR_SET_DUMPABLE prctl) even if the process user
+; or group is differrent than the master process user. It allows to create process
+; core dump and ptrace the process for the pool user.
+; Default Value: no
+; process.dumpable = yes
+
+; Choose how the process manager will control the number of child processes.
+; Possible Values:
+;   static  - a fixed number (pm.max_children) of child processes;
+;   dynamic - the number of child processes are set dynamically based on the
+;             following directives. With this process management, there will be
+;             always at least 1 children.
+;             pm.max_children      - the maximum number of children that can
+;                                    be alive at the same time.
+;             pm.start_servers     - the number of children created on startup.
+;             pm.min_spare_servers - the minimum number of children in 'idle'
+;                                    state (waiting to process). If the number
+;                                    of 'idle' processes is less than this
+;                                    number then some children will be created.
+;             pm.max_spare_servers - the maximum number of children in 'idle'
+;                                    state (waiting to process). If the number
+;                                    of 'idle' processes is greater than this
+;                                    number then some children will be killed.
+;  ondemand - no children are created at startup. Children will be forked when
+;             new requests will connect. The following parameter are used:
+;             pm.max_children           - the maximum number of children that
+;                                         can be alive at the same time.
+;             pm.process_idle_timeout   - The number of seconds after which
+;                                         an idle process will be killed.
+; Note: This value is mandatory.
+pm = dynamic
+
+; The number of child processes to be created when pm is set to 'static' and the
+; maximum number of child processes when pm is set to 'dynamic' or 'ondemand'.
+; This value sets the limit on the number of simultaneous requests that will be
+; served. Equivalent to the ApacheMaxClients directive with mpm_prefork.
+; Equivalent to the PHP_FCGI_CHILDREN environment variable in the original PHP
+; CGI. The below defaults are based on a server without much resources. Don't
+; forget to tweak pm.* to fit your needs.
+; Note: Used when pm is set to 'static', 'dynamic' or 'ondemand'
+; Note: This value is mandatory.
+pm.max_children = 5
+
+; The number of child processes created on startup.
+; Note: Used only when pm is set to 'dynamic'
+; Default Value: (min_spare_servers + max_spare_servers) / 2
+pm.start_servers = $(($(nproc --all)*4))
+
+; The desired minimum number of idle server processes.
+; Note: Used only when pm is set to 'dynamic'
+; Note: Mandatory when pm is set to 'dynamic'
+pm.min_spare_servers = $(($(nproc --all)*2))
+
+; The desired maximum number of idle server processes.
+; Note: Used only when pm is set to 'dynamic'
+; Note: Mandatory when pm is set to 'dynamic'
+pm.max_spare_servers = $(($(nproc --all)*4))
+
+; The number of seconds after which an idle process will be killed.
+; Note: Used only when pm is set to 'ondemand'
+; Default Value: 10s
+;pm.process_idle_timeout = 10s;
+
+; The number of requests each child process should execute before respawning.
+; This can be useful to work around memory leaks in 3rd party libraries. For
+; endless request processing specify '0'. Equivalent to PHP_FCGI_MAX_REQUESTS.
+; Default Value: 0
+;pm.max_requests = 500
+
+; The URI to view the FPM status page. If this value is not set, no URI will be
+; recognized as a status page. It shows the following informations:
+;   pool                 - the name of the pool;
+;   process manager      - static, dynamic or ondemand;
+;   start time           - the date and time FPM has started;
+;   start since          - number of seconds since FPM has started;
+;   accepted conn        - the number of request accepted by the pool;
+;   listen queue         - the number of request in the queue of pending
+;                          connections (see backlog in listen(2));
+;   max listen queue     - the maximum number of requests in the queue
+;                          of pending connections since FPM has started;
+;   listen queue len     - the size of the socket queue of pending connections;
+;   idle processes       - the number of idle processes;
+;   active processes     - the number of active processes;
+;   total processes      - the number of idle + active processes;
+;   max active processes - the maximum number of active processes since FPM
+;                          has started;
+;   max children reached - number of times, the process limit has been reached,
+;                          when pm tries to start more children (works only for
+;                          pm 'dynamic' and 'ondemand');
+; Value are updated in real time.
+; Example output:
+;   pool:                 www
+;   process manager:      static
+;   start time:           01/Jul/2011:17:53:49 +0200
+;   start since:          62636
+;   accepted conn:        190460
+;   listen queue:         0
+;   max listen queue:     1
+;   listen queue len:     42
+;   idle processes:       4
+;   active processes:     11
+;   total processes:      15
+;   max active processes: 12
+;   max children reached: 0
+;
+; By default the status page output is formatted as text/plain. Passing either
+; 'html', 'xml' or 'json' in the query string will return the corresponding
+; output syntax. Example:
+;   http://www.foo.bar/status
+;   http://www.foo.bar/status?json
+;   http://www.foo.bar/status?html
+;   http://www.foo.bar/status?xml
+;
+; By default the status page only outputs short status. Passing 'full' in the
+; query string will also return status for each pool process.
+; Example:
+;   http://www.foo.bar/status?full
+;   http://www.foo.bar/status?json&full
+;   http://www.foo.bar/status?html&full
+;   http://www.foo.bar/status?xml&full
+; The Full status returns for each process:
+;   pid                  - the PID of the process;
+;   state                - the state of the process (Idle, Running, ...);
+;   start time           - the date and time the process has started;
+;   start since          - the number of seconds since the process has started;
+;   requests             - the number of requests the process has served;
+;   request duration     - the duration in µs of the requests;
+;   request method       - the request method (GET, POST, ...);
+;   request URI          - the request URI with the query string;
+;   content length       - the content length of the request (only with POST);
+;   user                 - the user (PHP_AUTH_USER) (or '-' if not set);
+;   script               - the main script called (or '-' if not set);
+;   last request cpu     - the %cpu the last request consumed
+;                          it's always 0 if the process is not in Idle state
+;                          because CPU calculation is done when the request
+;                          processing has terminated;
+;   last request memory  - the max amount of memory the last request consumed
+;                          it's always 0 if the process is not in Idle state
+;                          because memory calculation is done when the request
+;                          processing has terminated;
+; If the process is in Idle state, then informations are related to the
+; last request the process has served. Otherwise informations are related to
+; the current request being served.
+; Example output:
+;   ************************
+;   pid:                  31330
+;   state:                Running
+;   start time:           01/Jul/2011:17:53:49 +0200
+;   start since:          63087
+;   requests:             12808
+;   request duration:     1250261
+;   request method:       GET
+;   request URI:          /test_mem.php?N=10000
+;   content length:       0
+;   user:                 -
+;   script:               /home/fat/web/docs/php/test_mem.php
+;   last request cpu:     0.00
+;   last request memory:  0
+;
+; Note: There is a real-time FPM status monitoring sample web page available
+;       It's available in: /usr/share/php/7.4/fpm/status.html
+;
+; Note: The value must start with a leading slash (/). The value can be
+;       anything, but it may not be a good idea to use the .php extension or it
+;       may conflict with a real PHP file.
+; Default Value: not set
+pm.status_path = /status
+
+; The ping URI to call the monitoring page of FPM. If this value is not set, no
+; URI will be recognized as a ping page. This could be used to test from outside
+; that FPM is alive and responding, or to
+; - create a graph of FPM availability (rrd or such);
+; - remove a server from a group if it is not responding (load balancing);
+; - trigger alerts for the operating team (24/7).
+; Note: The value must start with a leading slash (/). The value can be
+;       anything, but it may not be a good idea to use the .php extension or it
+;       may conflict with a real PHP file.
+; Default Value: not set
+;ping.path = /ping
+
+; This directive may be used to customize the response of a ping request. The
+; response is formatted as text/plain with a 200 response code.
+; Default Value: pong
+;ping.response = pong
+
+; The access log file
+; Default: not set
+;access.log = log/$pool.access.log
+
+; The access log format.
+; The following syntax is allowed
+;  %%: the '%' character
+;  %C: %CPU used by the request
+;      it can accept the following format:
+;      - %{user}C for user CPU only
+;      - %{system}C for system CPU only
+;      - %{total}C  for user + system CPU (default)
+;  %d: time taken to serve the request
+;      it can accept the following format:
+;      - %{seconds}d (default)
+;      - %{miliseconds}d
+;      - %{mili}d
+;      - %{microseconds}d
+;      - %{micro}d
+;  %e: an environment variable (same as $_ENV or $_SERVER)
+;      it must be associated with embraces to specify the name of the env
+;      variable. Some exemples:
+;      - server specifics like: %{REQUEST_METHOD}e or %{SERVER_PROTOCOL}e
+;      - HTTP headers like: %{HTTP_HOST}e or %{HTTP_USER_AGENT}e
+;  %f: script filename
+;  %l: content-length of the request (for POST request only)
+;  %m: request method
+;  %M: peak of memory allocated by PHP
+;      it can accept the following format:
+;      - %{bytes}M (default)
+;      - %{kilobytes}M
+;      - %{kilo}M
+;      - %{megabytes}M
+;      - %{mega}M
+;  %n: pool name
+;  %o: output header
+;      it must be associated with embraces to specify the name of the header:
+;      - %{Content-Type}o
+;      - %{X-Powered-By}o
+;      - %{Transfert-Encoding}o
+;      - ....
+;  %p: PID of the child that serviced the request
+;  %P: PID of the parent of the child that serviced the request
+;  %q: the query string
+;  %Q: the '?' character if query string exists
+;  %r: the request URI (without the query string, see %q and %Q)
+;  %R: remote IP address
+;  %s: status (response code)
+;  %t: server time the request was received
+;      it can accept a strftime(3) format:
+;      %d/%b/%Y:%H:%M:%S %z (default)
+;      The strftime(3) format must be encapsuled in a %{<strftime_format>}t tag
+;      e.g. for a ISO8601 formatted timestring, use: %{%Y-%m-%dT%H:%M:%S%z}t
+;  %T: time the log has been written (the request has finished)
+;      it can accept a strftime(3) format:
+;      %d/%b/%Y:%H:%M:%S %z (default)
+;      The strftime(3) format must be encapsuled in a %{<strftime_format>}t tag
+;      e.g. for a ISO8601 formatted timestring, use: %{%Y-%m-%dT%H:%M:%S%z}t
+;  %u: remote user
+;
+; Default: "%R - %u %t \"%m %r\" %s"
+;access.format = "%R - %u %t \"%m %r%Q%q\" %s %f %{mili}d %{kilo}M %C%%"
+
+; The log file for slow requests
+; Default Value: not set
+; Note: slowlog is mandatory if request_slowlog_timeout is set
+;slowlog = log/$pool.log.slow
+
+; The timeout for serving a single request after which a PHP backtrace will be
+; dumped to the 'slowlog' file. A value of '0s' means 'off'.
+; Available units: s(econds)(default), m(inutes), h(ours), or d(ays)
+; Default Value: 0
+;request_slowlog_timeout = 0
+
+; Depth of slow log stack trace.
+; Default Value: 20
+;request_slowlog_trace_depth = 20
+
+; The timeout for serving a single request after which the worker process will
+; be killed. This option should be used when the 'max_execution_time' ini option
+; does not stop script execution for some reason. A value of '0' means 'off'.
+; Available units: s(econds)(default), m(inutes), h(ours), or d(ays)
+; Default Value: 0
+;request_terminate_timeout = 0
+
+; The timeout set by 'request_terminate_timeout' ini option is not engaged after
+; application calls 'fastcgi_finish_request' or when application has finished and
+; shutdown functions are being called (registered via register_shutdown_function).
+; This option will enable timeout limit to be applied unconditionally
+; even in such cases.
+; Default Value: no
+;request_terminate_timeout_track_finished = no
+
+; Set open file descriptor rlimit.
+; Default Value: system defined value
+;rlimit_files = 1024
+
+; Set max core size rlimit.
+; Possible Values: 'unlimited' or an integer greater or equal to 0
+; Default Value: system defined value
+;rlimit_core = 0
+
+; Chroot to this directory at the start. This value must be defined as an
+; absolute path. When this value is not set, chroot is not used.
+; Note: you can prefix with '$prefix' to chroot to the pool prefix or one
+; of its subdirectories. If the pool prefix is not set, the global prefix
+; will be used instead.
+; Note: chrooting is a great security feature and should be used whenever
+;       possible. However, all PHP paths will be relative to the chroot
+;       (error_log, sessions.save_path, ...).
+; Default Value: not set
+;chroot =
+
+; Chdir to this directory at the start.
+; Note: relative path can be used.
+; Default Value: current directory or / when chroot
+;chdir = /var/www
+
+; Redirect worker stdout and stderr into main error log. If not set, stdout and
+; stderr will be redirected to /dev/null according to FastCGI specs.
+; Note: on highloaded environement, this can cause some delay in the page
+; process time (several ms).
+; Default Value: no
+catch_workers_output = yes
+
+; Decorate worker output with prefix and suffix containing information about
+; the child that writes to the log and if stdout or stderr is used as well as
+; log level and time. This options is used only if catch_workers_output is yes.
+; Settings to "no" will output data as written to the stdout or stderr.
+; Default value: yes
+;decorate_workers_output = no
+
+; Clear environment in FPM workers
+; Prevents arbitrary environment variables from reaching FPM worker processes
+; by clearing the environment in workers before env vars specified in this
+; pool configuration are added.
+; Setting to "no" will make all environment variables available to PHP code
+; via getenv(), $_ENV and $_SERVER.
+; Default Value: yes
+;clear_env = no
+
+; Limits the extensions of the main script FPM will allow to parse. This can
+; prevent configuration mistakes on the web server side. You should only limit
+; FPM to .php extensions to prevent malicious users to use other extensions to
+; execute php code.
+; Note: set an empty value to allow all extensions.
+; Default Value: .php
+;security.limit_extensions = .php .php3 .php4 .php5 .php7
+
+; Pass environment variables like LD_LIBRARY_PATH. All $VARIABLEs are taken from
+; the current environment.
+; Default Value: clean env
+;env[HOSTNAME] = $HOSTNAME
+;env[PATH] = /usr/local/bin:/usr/bin:/bin
+;env[TMP] = /tmp
+;env[TMPDIR] = /tmp
+;env[TEMP] = /tmp
+
+; Additional php.ini defines, specific to this pool of workers. These settings
+; overwrite the values previously defined in the php.ini. The directives are the
+; same as the PHP SAPI:
+;   php_value/php_flag             - you can set classic ini defines which can
+;                                    be overwritten from PHP call 'ini_set'.
+;   php_admin_value/php_admin_flag - these directives won't be overwritten by
+;                                     PHP call 'ini_set'
+; For php_*flag, valid values are on, off, 1, 0, true, false, yes or no.
+
+; Defining 'extension' will load the corresponding shared extension from
+; extension_dir. Defining 'disable_functions' or 'disable_classes' will not
+; overwrite previously defined php.ini values, but will append the new value
+; instead.
+
+; Note: path INI options can be relative and will be expanded with the prefix
+; (pool, global or /usr)
+
+; Default Value: nothing is defined by default except the values in php.ini and
+;                specified at startup with the -d argument
+;php_admin_value[sendmail_path] = /usr/sbin/sendmail -t -i -f www@my.domain.com
+;php_flag[display_errors] = off
+;php_admin_value[error_log] = /var/log/fpm-php.www.log
+;php_admin_flag[log_errors] = on
+;php_admin_value[memory_limit] = 32M
+EOF
+systemctl restart php7.4-fpm
+	fi
+fi
 ########Install Netdata################
-if [[ $install_netdata = 1 ]]; then
-	if [[ ! -f /usr/sbin/netdata ]]; then
+if [[ $install_netdata == 1 ]]; then
+	if [[ ! -f /opt/netdata/usr/sbin/netdata ]]; then
 		clear
 		colorEcho ${INFO} "Install netdata ing"
 		bash <(curl -Ss https://my-netdata.io/kickstart-static64.sh) --dont-wait --no-updates
@@ -1979,15 +2433,6 @@ nginx_log:
   name  : 'nginx_log'
   path  : '/var/log/nginx/access.log'
 EOF
-		cat > '/opt/netdata/etc/netdata/go.d/whoisquery.conf' << EOF
-update_every : 60
-
-jobs:
-  - name   : ${domain}
-    source : ${domain}
-    
-    days_until_expiration_critical: 30
-EOF
 		cat > '/opt/netdata/etc/netdata/go.d/docker_engine.conf' << EOF
 jobs:
   - name: local
@@ -1997,10 +2442,31 @@ EOF
 update_every : 60
 
 jobs:
-  - name   : ${domain}
+  - name   : ${domain}_${password1}
     source : https://${domain}:443
     check_revocation_status: yes
+
+  - name   : ${domain}_${password1}_file_cert
+    source : file:///root/.acme.sh/${domain}_ecc/fullchain.cer
 EOF
+if [[ ${install_php} == 1 ]]; then
+cat > '/opt/netdata/etc/netdata/python.d/phpfpm.conf' << EOF
+local:
+  url     : 'http://127.0.0.1:81/status?full&json'
+EOF
+fi
+if [[ ${install_tor} == 1 ]]; then
+apt-get install python-pip -y
+pip install stem
+cat > '/opt/netdata/etc/netdata/python.d/tor.conf' << EOF
+update_every : 1
+priority     : 60001
+
+local_tcp:
+ name: 'local'
+ control_port: 9051
+EOF
+fi
 	fi
 fi
 clear
@@ -2279,7 +2745,8 @@ fi
 ##########Install Mariadb#############
 install_mariadb(){
   curl -LsS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash
-  sudo apt-get install mariadb-server -y
+  apt-get install mariadb-server -y
+  apt-get install python-mysqldb -y
   apt-get -y install expect
 
   SECURE_MYSQL=$(expect -c "
@@ -2321,7 +2788,7 @@ apt-get -y purge expect
 
 [client]
 # Default is Latin1, if you need UTF-8 set this (also in server section)
-#default-character-set = utf8 
+default-character-set = utf8 
 
 [mysqld]
 #
@@ -2329,10 +2796,10 @@ apt-get -y purge expect
 # 
 # Default is Latin1, if you need UTF-8 set all this (also in client section)
 #
-#character-set-server  = utf8 
-#collation-server      = utf8_general_ci 
-#character_set_server   = utf8 
-#collation_server       = utf8_general_ci 
+character-set-server  = utf8 
+collation-server      = utf8_general_ci 
+character_set_server   = utf8 
+collation_server       = utf8_general_ci 
 # Import all .cnf files from configuration directory
 !includedir /etc/mysql/mariadb.conf.d/
 bind-address=127.0.0.1
@@ -2341,7 +2808,6 @@ bind-address=127.0.0.1
 
 userstat = 1
 EOF
-apt-get install python-mysqldb -y
 
 mysql -u root -e "create user 'netdata'@'localhost';"
 mysql -u root -e "grant usage on *.* to 'netdata'@'localhost';"
@@ -2373,6 +2839,7 @@ server {
 	listen 127.0.0.1:80;
 	listen 127.0.0.1:82 http2;
 	server_name $domain;
+	root /usr/share/nginx/html/;
 	resolver 127.0.0.1;
 	resolver_timeout 10s;
 	#if (\$http_user_agent ~* (wget|curl) ) { return 403; }
@@ -2385,9 +2852,17 @@ server {
 	#add_header Content-Security-Policy "default-src 'self'; script-src 'self' https://ssl.google-analytics.com https://assets.zendesk.com https://connect.facebook.net; img-src 'self' https://ssl.google-analytics.com https://s-static.ak.facebook.com https://assets.zendesk.com; style-src 'self' https://fonts.googleapis.com https://assets.zendesk.com; font-src 'self' https://themes.googleusercontent.com; frame-src https://assets.zendesk.com https://www.facebook.com https://s-static.ak.facebook.com https://tautt.zendesk.com; object-src 'none'";
 	#add_header Feature-Policy "geolocation none;midi none;notifications none;push none;sync-xhr none;microphone none;camera none;magnetometer none;gyroscope none;speaker self;vibrate none;fullscreen self;payment none;";
 	location / {
-		root /usr/share/nginx/html/;
 			index index.html;
 		}
+    location ~ \.php\$ {
+        fastcgi_split_path_info ^(.+\.php)(/.+)\$;
+        fastcgi_param SCRIPT_FILENAME \$request_filename;
+        #fastcgi_index index.php;
+        include fastcgi_params;
+        #fastcgi_pass 127.0.0.1:9000;
+        fastcgi_pass   unix:/run/php/php7.4-fpm.sock;
+        }
+
 EOF
 	else
 	cat > '/etc/nginx/conf.d/default.conf' << EOF
@@ -2409,6 +2884,8 @@ server {
 	ssl_stapling_verify on;
 	#ssl_dhparam /etc/nginx/nginx.pem;
 
+	root /usr/share/nginx/html;
+
 	resolver 127.0.0.1;
 	resolver_timeout 10s;
 	server_name           $domain;
@@ -2424,8 +2901,14 @@ server {
 	#if (\$http_user_agent = "") { return 403; }
 	if (\$host != "$domain") { return 404; }
 	location / {
-		root /usr/share/nginx/html;
 		index index.html;
+	}
+	location ~ \.php\$ {
+        #fastcgi_param SCRIPT_FILENAME \$request_filename;
+        #fastcgi_index index.php;
+        include fastcgi_params;
+        #fastcgi_pass 127.0.0.1:9000;
+        fastcgi_pass   unix:/run/php/php7.4-fpm.sock;
 	}
 EOF
 fi
@@ -2469,6 +2952,7 @@ echo "        }" >> /etc/nginx/conf.d/default.conf
 fi
 if [[ $install_qbt == 1 ]]; then
 echo "    location $qbtpath {" >> /etc/nginx/conf.d/default.conf
+echo "        #access_log off;" >> /etc/nginx/conf.d/default.conf
 echo "        proxy_pass              http://127.0.0.1:8080/;" >> /etc/nginx/conf.d/default.conf
 echo "        proxy_set_header        X-Forwarded-Host        \$http_host;" >> /etc/nginx/conf.d/default.conf
 echo "        error_page 502 = @errpage;" >> /etc/nginx/conf.d/default.conf
@@ -2476,6 +2960,7 @@ echo "        }" >> /etc/nginx/conf.d/default.conf
 fi
 if [[ $install_file == 1 ]]; then
 echo "    location $filepath {" >> /etc/nginx/conf.d/default.conf
+echo "        #access_log off;" >> /etc/nginx/conf.d/default.conf
 echo "        proxy_pass http://127.0.0.1:8081/;" >> /etc/nginx/conf.d/default.conf
 echo "        proxy_set_header Host \$http_host;" >> /etc/nginx/conf.d/default.conf
 echo "        proxy_set_header X-Real-IP \$remote_addr;" >> /etc/nginx/conf.d/default.conf
@@ -2486,6 +2971,7 @@ echo "        }" >> /etc/nginx/conf.d/default.conf
 fi
 if [[ $install_tracker == 1 ]]; then
 echo "    location $trackerpath {" >> /etc/nginx/conf.d/default.conf
+echo "        #access_log off;" >> /etc/nginx/conf.d/default.conf
 echo "        proxy_pass http://127.0.0.1:8000/announce;" >> /etc/nginx/conf.d/default.conf
 echo "        proxy_set_header Upgrade \$http_upgrade;" >> /etc/nginx/conf.d/default.conf
 echo "        proxy_set_header Connection "upgrade";" >> /etc/nginx/conf.d/default.conf
@@ -2495,6 +2981,7 @@ echo "        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;" >> 
 echo "        error_page 502 = @errpage;" >> /etc/nginx/conf.d/default.conf
 echo "        }" >> /etc/nginx/conf.d/default.conf
 echo "    location $trackerstatuspath {" >> /etc/nginx/conf.d/default.conf
+echo "        #access_log off;" >> /etc/nginx/conf.d/default.conf
 echo "        proxy_pass http://127.0.0.1:8000/stats;" >> /etc/nginx/conf.d/default.conf
 echo "        proxy_set_header Host \$http_host;" >> /etc/nginx/conf.d/default.conf
 echo "        proxy_set_header X-Real-IP \$remote_addr;" >> /etc/nginx/conf.d/default.conf
@@ -2504,6 +2991,7 @@ echo "        }" >> /etc/nginx/conf.d/default.conf
 fi
 if [[ $install_netdata == 1 ]]; then
 echo "    location ~ $netdatapath(?<ndpath>.*) {" >> /etc/nginx/conf.d/default.conf
+echo "        #access_log off;" >> /etc/nginx/conf.d/default.conf
 echo "        proxy_redirect off;" >> /etc/nginx/conf.d/default.conf
 echo "        proxy_set_header Host \$host;" >> /etc/nginx/conf.d/default.conf
 echo "        proxy_set_header X-Forwarded-Host \$host;" >> /etc/nginx/conf.d/default.conf
@@ -2542,6 +3030,15 @@ echo "    listen 127.0.0.1:81;" >> /etc/nginx/conf.d/default.conf
 echo "    location /stub_status {" >> /etc/nginx/conf.d/default.conf
 echo "    access_log off;" >> /etc/nginx/conf.d/default.conf
 echo "    stub_status; #For Netdata only !" >> /etc/nginx/conf.d/default.conf
+echo "    }" >> /etc/nginx/conf.d/default.conf
+echo "    location ~ ^/(status|ping)\$ {" >> /etc/nginx/conf.d/default.conf
+echo "    access_log off;" >> /etc/nginx/conf.d/default.conf
+echo "    allow 127.0.0.1;" >> /etc/nginx/conf.d/default.conf
+echo "    fastcgi_param SCRIPT_FILENAME \$request_filename;" >> /etc/nginx/conf.d/default.conf
+echo "    fastcgi_index index.php;" >> /etc/nginx/conf.d/default.conf
+echo "    include fastcgi_params;" >> /etc/nginx/conf.d/default.conf
+echo "    #fastcgi_pass 127.0.0.1:9000;" >> /etc/nginx/conf.d/default.conf
+echo "    fastcgi_pass   unix:/run/php/php7.4-fpm.sock;" >> /etc/nginx/conf.d/default.conf
 echo "    }" >> /etc/nginx/conf.d/default.conf
 echo "}" >> /etc/nginx/conf.d/default.conf
 echo "upstream netdata {" >> /etc/nginx/conf.d/default.conf
@@ -3236,7 +3733,7 @@ advancedMenu() {
 		rm results
 		prasejson
 		autoupdate
-		apt-get purge dnsutils python-pil socat python3-qrcode -q -y
+		apt-get purge dnsutils python-pil python3-qrcode -q -y
 		apt-get autoremove -y
 		if [[ $dnsmasq_install -eq 1 ]]; then
 			if [[ $dist = ubuntu ]]; then
@@ -3260,10 +3757,11 @@ advancedMenu() {
 		if [[ $install_netdata = 1 ]]; then
 		wget -O /opt/netdata/etc/netdata/netdata.conf http://127.0.0.1:19999/netdata.conf
 		sed -i 's/# bind to = \*/bind to = 127.0.0.1/g' /opt/netdata/etc/netdata/netdata.conf
+		cd /opt/netdata/bin
+		sleep 1
+		bash netdata-claim.sh -token=llFcKa-42N035f4WxUYZ5VhSnKLBYQR9Se6HIrtXysmjkMBHiLCuiHfb9aEJmXk0hy6V_pZyKMEz_QN30o2s7_OsS7sKEhhUTQGfjW0KAG5ahWhbnCvX8b_PW_U-256otbL5CkM -rooms=38e38830-7b2c-4c34-a4c7-54cacbe6dbb9 -url=https://app.netdata.cloud
 		colorEcho ${INFO} "Restart netdata ing"
 		systemctl restart netdata
-		cd /opt/netdata/bin
-		sudo ./netdata-claim.sh -token=llFcKa-42N035f4WxUYZ5VhSnKLBYQR9Se6HIrtXysmjkMBHiLCuiHfb9aEJmXk0hy6V_pZyKMEz_QN30o2s7_OsS7sKEhhUTQGfjW0KAG5ahWhbnCvX8b_PW_U-256otbL5CkM -rooms=38e38830-7b2c-4c34-a4c7-54cacbe6dbb9 -url=https://app.netdata.cloud
 		cd
 		fi
 		mv /usr/share/nginx/html/result.html /usr/share/nginx/html/$password1.html
@@ -3323,6 +3821,9 @@ echo -e "Docker:\t\t"\$(systemctl is-active docker)
   if [[ -f /usr/sbin/mysqld ]]; then
 echo -e "MariaDB:\t\t"\$(systemctl is-active mariadb)
   fi
+  if [[ -f /usr/sbin/php-fpm7.4 ]]; then
+echo -e "PHP:\t\t"\$(systemctl is-active php7.4-fpm)
+  fi
   if [[ -f /usr/sbin/sshd ]]; then
 echo -e "sshd:\t\t"\$(systemctl is-active sshd)
   fi
@@ -3347,12 +3848,11 @@ echo "*                                   Vps Toolbox Result                    
 echo "*                     Please visit the following link to get the result                            *"
 echo "*                       https://$domain/$password1.html                                     *"
 echo "*                 For more info ,please run the following command                                  *"
-echo 'sudo bash -c "\$(curl -fsSL https://raw.githubusercontent.com/johnrosen1/vpstoolbox/master/vps.sh)"*'
+echo 'curl -sO https://raw.githubusercontent.com/johnrosen1/vpstoolbox/master/vps.sh && sudo bash vps.sh*'
 echo "****************************************************************************************************"
 EOF
 		chmod +x /etc/profile.d/mymotd.sh
 		clear
-		cat /root/.trojan/result.txt
 		if (whiptail --title "Reboot" --yesno "安装成功(success)！ 重启 (reboot) 使配置生效,重新SSH连接后将自动出现结果 (to make the configuration effective)?" 8 78); then
 		clear
 		reboot
@@ -3370,16 +3870,12 @@ EOF
 		colorEcho ${INFO} "Please read the result then hit enter to proceed"
 		read var
 		colorEcho ${INFO} "Network Benchmark"
-			apt-get install gnupg apt-transport-https dirmngr -y -qq
+		apt-get install gnupg apt-transport-https dirmngr -y -qq
 		INSTALL_KEY="379CE192D401AB61"
-		# Ubuntu versions supported: xenial, bionic
-		# Debian versions supported: jessie, stretch, buster
 		DEB_DISTRO=$(lsb_release -sc)
 		apt-key adv --keyserver keyserver.ubuntu.com --recv-keys $INSTALL_KEY
 		echo "deb https://ookla.bintray.com/debian ${DEB_DISTRO} main" | sudo tee  /etc/apt/sources.list.d/speedtest.list
 		apt-get update -q
-		# Other non-official binaries will conflict with Speedtest CLI
-		# Example how to remove using apt-get
 		apt-get purge speedtest-cli -y -qq
 		apt-get install speedtest -y -qq
 		#speedtest
@@ -3417,7 +3913,7 @@ else
 ssh-keygen -A
 sed -i 's/#MaxAuthTries 6/MaxAuthTries 3/' /etc/ssh/sshd_config
 sed -i 's/^HostKey \/etc\/ssh\/ssh_host_\(dsa\|ecdsa\)_key$/\#HostKey \/etc\/ssh\/ssh_host_\1_key/g' /etc/ssh/sshd_config
-sed -i 's/#HostKey \/etc\/ssh\/ssh_host_ed25519_key/HostKey \/etc\/ssh\/ssh_host_ed25519_key/g' /etc/ssh/sshd_config
+#sed -i 's/#HostKey \/etc\/ssh\/ssh_host_ed25519_key/HostKey \/etc\/ssh\/ssh_host_ed25519_key/g' /etc/ssh/sshd_config
 sed -i 's/#TCPKeepAlive yes/TCPKeepAlive yes/' /etc/ssh/sshd_config
 sed -i 's/#PermitTunnel no/PermitTunnel no/' /etc/ssh/sshd_config
 sed -i 's/#PermitEmptyPasswords no/PermitEmptyPasswords no/' /etc/ssh/sshd_config
